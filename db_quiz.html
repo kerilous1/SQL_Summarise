@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Quiz — Relational Algebra & Normalization</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #161820;
+  --bg3: #1e2030;
+  --bg4: #252840;
+  --border: #2e3150;
+  --border2: #3d4275;
+  --accent: #7c6af7;
+  --accent2: #a89cf7;
+  --accent-glow: rgba(124,106,247,0.18);
+  --green: #22d3a0;
+  --green-bg: rgba(34,211,160,0.10);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.10);
+  --amber: #fbbf24;
+  --amber-bg: rgba(251,191,36,0.10);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.10);
+  --text: #e2e4f0;
+  --text2: #9da3c8;
+  --text3: #5a6080;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Cairo', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  direction: rtl;
+}
+
+/* ── HERO ── */
+.hero {
+  background: linear-gradient(135deg, #13152a 0%, #1a1d35 50%, #0f1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 3rem 1.5rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(124,106,247,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-block;
+  background: var(--accent-glow);
+  border: 1px solid var(--border2);
+  color: var(--accent2);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+}
+.hero h1 {
+  font-size: clamp(22px, 5vw, 36px);
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+.hero h1 span { color: var(--accent2); }
+.hero p { font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; }
+.hero-stats {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.stat {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.stat strong { color: var(--accent2); }
+
+/* ── NAV TABS ── */
+.tabs-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(15,17,23,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1rem;
+}
+.tabs {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  max-width: 900px;
+  margin: 0 auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text3);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 14px 18px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+}
+.tab-btn:hover { color: var(--text2); }
+.tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent); }
+
+/* ── MAIN ── */
+.main { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── SECTION HEADER ── */
+.sec-header { margin-bottom: 1.5rem; }
+.sec-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.3rem;
+}
+.sec-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+/* ── CONTEXT BOX ── */
+.context-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.context-box::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 3px; height: 100%;
+  background: var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.context-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; margin: 0.5rem 0; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  background: var(--bg4);
+  color: var(--accent2);
+  padding: 9px 14px;
+  border: 1px solid var(--border2);
+  font-weight: 600;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+td {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+tr:hover td { background: var(--bg3); }
+
+/* ── QUERY DISPLAY ── */
+.query-box {
+  display: inline-block;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent2);
+  margin: 0.75rem 0;
+  word-break: break-all;
+}
+
+/* ── QUESTION CARD ── */
+.qcard {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.qcard:hover { border-color: var(--border2); }
+.qcard-head {
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.qnum {
+  min-width: 28px; height: 28px;
+  background: var(--accent-glow);
+  border: 1px solid var(--border2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--accent2);
+  flex-shrink: 0; margin-top: 1px;
+}
+.qtext { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.65; }
+.qsub { font-size: 13px; color: var(--text2); font-weight: 400; margin-top: 4px; }
+
+/* ── MCQ OPTIONS ── */
+.options { padding: 0 1.25rem 1.25rem; display: flex; flex-direction: column; gap: 8px; }
+.opt {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 13px;
+  color: var(--text2);
+  text-align: right;
+  font-family: var(--sans);
+  width: 100%;
+  line-height: 1.6;
+}
+.opt:hover:not(.disabled) { border-color: var(--border2); background: var(--bg4); color: var(--text); }
+.opt .ol {
+  min-width: 22px; height: 22px;
+  border: 1.5px solid var(--border2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--text3);
+  flex-shrink: 0; font-family: var(--mono);
+}
+.opt.correct { border-color: var(--green); background: var(--green-bg); color: #fff; }
+.opt.correct .ol { border-color: var(--green); background: var(--green); color: #000; }
+.opt.wrong { border-color: var(--red); background: var(--red-bg); color: var(--text2); }
+.opt.wrong .ol { border-color: var(--red); background: var(--red); color: #fff; }
+.opt.disabled { cursor: not-allowed; opacity: 0.6; }
+.opt.dimmed { opacity: 0.45; }
+
+.check-btn {
+  margin: 0 1.25rem 1.25rem;
+  display: block;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 20px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  width: calc(100% - 2.5rem);
+}
+.check-btn:hover { opacity: 0.88; }
+.check-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── OPEN QUESTION ── */
+.open-body { padding: 0 1.25rem 1.25rem; }
+.open-label { font-size: 12px; color: var(--text3); font-weight: 600; margin-bottom: 6px; letter-spacing: 0.04em; }
+.open-hint {
+  background: var(--amber-bg);
+  border: 1px solid rgba(251,191,36,0.25);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--amber);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.show-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--accent2);
+  border-radius: var(--radius-sm);
+  padding: 8px 18px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.show-btn:hover { background: var(--bg4); border-color: var(--accent); }
+
+/* ── ANSWER REVEAL ── */
+.answer-reveal { display: none; margin-top: 1rem; }
+.answer-reveal.open { display: block; }
+.answer-label {
+  font-size: 11px; font-weight: 700; color: var(--green);
+  letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;
+}
+.answer-box {
+  background: var(--bg3);
+  border: 1px solid rgba(34,211,160,0.3);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+.explain {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text2);
+  line-height: 1.75;
+  background: var(--bg4);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+.explain strong { color: var(--accent2); }
+
+/* ── FEEDBACK ── */
+.feedback {
+  display: none; margin: 0 1.25rem 1rem;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px; font-weight: 600; line-height: 1.65;
+}
+.feedback.correct { background: var(--green-bg); border: 1px solid rgba(34,211,160,0.3); color: var(--green); }
+.feedback.wrong { background: var(--red-bg); border: 1px solid rgba(248,113,113,0.3); color: var(--red); }
+.feedback.open { display: block; }
+
+/* ── FD TYPES ── */
+.fd-tag {
+  display: inline-block;
+  padding: 2px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+  margin-right: 4px;
+}
+.fd-trivial { background: var(--bg4); color: var(--text2); border: 1px solid var(--border2); }
+.fd-partial { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+.fd-transitive { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
+.fd-full { background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,211,160,0.3); }
+
+/* ── SCORE ── */
+.score-bar {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+.score-num { font-size: 28px; font-weight: 900; color: var(--accent2); font-family: var(--mono); }
+.score-label { font-size: 13px; color: var(--text2); }
+.score-track { flex: 1; min-width: 120px; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+.score-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 3px; transition: width .5s ease; }
+
+/* ── DIVIDER ── */
+.qdivider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px) {
+  .tab-btn { padding: 12px 12px; font-size: 12px; }
+  th, td { padding: 6px 8px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-badge">📚 امتحان Database</div>
+  <h1>Quiz — <span>Relational Algebra</span> &amp; Normalization</h1>
+  <p>أسئلة شاملة على كل المحاور — MCQ + توقع الجدول</p>
+  <div class="hero-stats">
+    <div class="stat"><strong>40+</strong> سؤال</div>
+    <div class="stat"><strong>4</strong> محاور</div>
+    <div class="stat"><strong>MCQ</strong> + توقع الجدول</div>
+  </div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('ra1')">σ π ρ</button>
+    <button class="tab-btn" onclick="showTab('sets')">∪ ∩ − ×</button>
+    <button class="tab-btn" onclick="showTab('fd')">Functional Dependencies</button>
+    <button class="tab-btn" onclick="showTab('norm')">Normalization</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ══════════════ TAB 1: σ π ρ ══════════════ -->
+<div id="ra1" class="section active">
+  <div class="sec-header">
+    <div class="sec-title">Selection · Projection · Rename</div>
+    <div class="sec-desc">الجدول التالي مستخدم في الأسئلة 1 → 14</div>
+  </div>
+
+  <div class="context-box">
+    <div class="context-label">Relation: Employee</div>
+    <div class="tbl-wrap">
+      <table>
+        <tr><th>EmpID</th><th>EmpName</th><th>Department</th><th>Salary</th><th>City</th></tr>
+        <tr><td>E01</td><td>Ahmed</td><td>CS</td><td>9000</td><td>Cairo</td></tr>
+        <tr><td>E02</td><td>Sara</td><td>HR</td><td>6500</td><td>Alex</td></tr>
+        <tr><td>E03</td><td>Omar</td><td>CS</td><td>11000</td><td>Cairo</td></tr>
+        <tr><td>E04</td><td>Mona</td><td>IT</td><td>7500</td><td>Giza</td></tr>
+        <tr><td>E05</td><td>Yasser</td><td>HR</td><td>5000</td><td>Alex</td></tr>
+        <tr><td>E06</td><td>Layla</td><td>IT</td><td>8000</td><td>Cairo</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- MCQ 1 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">1</div>
+      <div><div class="qtext">Which query retrieves ALL tuples from the Employee relation without any filtering?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','q1')"><span class="ol">A</span> σ (EmpID > 0) (Employee)</button>
+      <button class="opt" onclick="pick(this,'correct','q1')"><span class="ol">B</span> σ (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q1')"><span class="ol">C</span> π (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q1')"><span class="ol">D</span> ρ (Employee)</button>
+    </div>
+    <div class="feedback" id="fb-q1"></div>
+    <button class="check-btn" id="cb-q1" onclick="check('q1')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 2 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">2</div>
+      <div><div class="qtext">Which query retrieves only the employees in the <strong>CS</strong> department?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','q2')"><span class="ol">A</span> π (Department = 'CS') (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q2')"><span class="ol">B</span> σ Department &gt; CS (Employee)</button>
+      <button class="opt" onclick="pick(this,'correct','q2')"><span class="ol">C</span> σ (Department = 'CS') (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q2')"><span class="ol">D</span> ρ CS (Employee)</button>
+    </div>
+    <div class="feedback" id="fb-q2"></div>
+    <button class="check-btn" id="cb-q2" onclick="check('q2')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 3 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">3</div>
+      <div><div class="qtext">Which query retrieves employees whose Salary is greater than 7000 <strong>AND</strong> who work in Cairo?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','q3')"><span class="ol">A</span> σ (Salary &gt; 7000 ∨ City = 'Cairo') (Employee)</button>
+      <button class="opt" onclick="pick(this,'correct','q3')"><span class="ol">B</span> σ (Salary &gt; 7000 ∧ City = 'Cairo') (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q3')"><span class="ol">C</span> π (Salary &gt; 7000 ∧ City = 'Cairo') (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q3')"><span class="ol">D</span> σ (Salary &lt; 7000 ∧ City = 'Cairo') (Employee)</button>
+    </div>
+    <div class="feedback" id="fb-q3"></div>
+    <button class="check-btn" id="cb-q3" onclick="check('q3')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 4 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">4</div>
+      <div><div class="qtext">Which query outputs <strong>only the EmpName and Salary</strong> columns for all employees?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','q4')"><span class="ol">A</span> σ EmpName, Salary (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q4')"><span class="ol">B</span> ρ EmpName, Salary (Employee)</button>
+      <button class="opt" onclick="pick(this,'correct','q4')"><span class="ol">C</span> π EmpName, Salary (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q4')"><span class="ol">D</span> π Employee (EmpName, Salary)</button>
+    </div>
+    <div class="feedback" id="fb-q4"></div>
+    <button class="check-btn" id="cb-q4" onclick="check('q4')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 5 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">5</div>
+      <div><div class="qtext">Which query renames the relation <strong>Employee</strong> to <strong>Emp</strong> and attribute <strong>EmpName</strong> to <strong>Name</strong>?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','q5')"><span class="ol">A</span> σ Emp (EmpID, Name, Department, Salary, City) (Employee)</button>
+      <button class="opt" onclick="pick(this,'correct','q5')"><span class="ol">B</span> ρ Emp (EmpID, Name, Department, Salary, City) (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q5')"><span class="ol">C</span> π Emp (EmpID, Name, Department, Salary, City) (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q5')"><span class="ol">D</span> ρ Employee (Emp(EmpID, Name))</button>
+    </div>
+    <div class="feedback" id="fb-q5"></div>
+    <button class="check-btn" id="cb-q5" onclick="check('q5')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 6 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">6</div>
+      <div><div class="qtext">Which query retrieves the <strong>EmpID</strong> of employees whose <strong>Salary ≥ 8000</strong>?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','q6')"><span class="ol">A</span> σ Salary &gt;= 8000 [ σ EmpID (Employee) ]</button>
+      <button class="opt" onclick="pick(this,'wrong','q6')"><span class="ol">B</span> π EmpID, Salary [ σ &gt;= 8000 (Employee) ]</button>
+      <button class="opt" onclick="pick(this,'correct','q6')"><span class="ol">C</span> π EmpID [ σ Salary &gt;= 8000 (Employee) ]</button>
+      <button class="opt" onclick="pick(this,'wrong','q6')"><span class="ol">D</span> σ EmpID [ π Salary &gt;= 8000 (Employee) ]</button>
+    </div>
+    <div class="feedback" id="fb-q6"></div>
+    <button class="check-btn" id="cb-q6" onclick="check('q6')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 7 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">7</div>
+      <div><div class="qtext">Which query retrieves employees whose Department is <strong>HR OR IT</strong>?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','q7')"><span class="ol">A</span> σ (Department = 'HR' ∧ Department = 'IT') (Employee)</button>
+      <button class="opt" onclick="pick(this,'correct','q7')"><span class="ol">B</span> σ (Department = 'HR' ∨ Department = 'IT') (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q7')"><span class="ol">C</span> π (Department = 'HR' ∨ Department = 'IT') (Employee)</button>
+      <button class="opt" onclick="pick(this,'wrong','q7')"><span class="ol">D</span> σ (Department ≠ 'CS') (Employee) — هذا ليس مكافئاً دائماً</button>
+    </div>
+    <div class="feedback" id="fb-q7"></div>
+    <button class="check-btn" id="cb-q7" onclick="check('q7')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <hr class="qdivider">
+  <div style="font-size:13px;color:var(--text3);margin-bottom:1rem;font-weight:600;">📝 توقع الناتج — اكتب الجدول بنفسك ثم اضغط إظهار الإجابة</div>
+
+  <!-- OPEN Q8 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q1</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">σ (Salary &gt; 7000 ∧ Department = 'CS') (Employee)</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <div class="open-hint">💡 اكتب الجدول على ورقة أولاً، ثم اضغط إظهار الإجابة للمقارنة</div>
+      <button class="show-btn" onclick="toggleAns('oa1',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="oa1">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>EmpID</th><th>EmpName</th><th>Department</th><th>Salary</th><th>City</th></tr>
+            <tr><td>E01</td><td>Ahmed</td><td>CS</td><td>9000</td><td>Cairo</td></tr>
+            <tr><td>E03</td><td>Omar</td><td>CS</td><td>11000</td><td>Cairo</td></tr>
+          </table></div>
+          <div class="explain">الاستعلام بيفلتر الصفوف اللي <strong>Salary &gt; 7000</strong> (Ahmed=9000✓، Omar=11000✓) <strong>AND</strong> Department='CS'. Sara و Yasser في HR، Mona و Layla في IT — كلهم خارج.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN Q9 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q2</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">π EmpName, City (Employee)</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <button class="show-btn" onclick="toggleAns('oa2',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="oa2">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>EmpName</th><th>City</th></tr>
+            <tr><td>Ahmed</td><td>Cairo</td></tr>
+            <tr><td>Sara</td><td>Alex</td></tr>
+            <tr><td>Omar</td><td>Cairo</td></tr>
+            <tr><td>Mona</td><td>Giza</td></tr>
+            <tr><td>Yasser</td><td>Alex</td></tr>
+            <tr><td>Layla</td><td>Cairo</td></tr>
+          </table></div>
+          <div class="explain">الـ π بتاخد الأعمدة المحددة بس من كل الصفوف. مفيش تكرار في الأسماء هنا لأن كل اسم مختلف — لو كان في صفين بنفس الـ EmpName و City كانوا هيتدمجوا.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN Q10 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q3</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">π EmpName [ σ (City = 'Alex' ∨ Salary &lt; 6000) (Employee) ]</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <button class="show-btn" onclick="toggleAns('oa3',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="oa3">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>EmpName</th></tr>
+            <tr><td>Sara</td></tr>
+            <tr><td>Yasser</td></tr>
+          </table></div>
+          <div class="explain">
+            الـ Selection الأول: City='Alex' → Sara(Alex)✓، Yasser(Alex)✓ | Salary&lt;6000 → Yasser(5000)✓ — Yasser يحقق الاثنين لكن يظهر مرة.<br>
+            بعدين Projection على EmpName بس → Sara, Yasser.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN Q11 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q4</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">ρ E (ID, Name, Dept, Sal, Location) [ π EmpID, EmpName, Department, Salary, City ( σ Salary &gt; 8000 (Employee) ) ]</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <button class="show-btn" onclick="toggleAns('oa4',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="oa4">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>ID</th><th>Name</th><th>Dept</th><th>Sal</th><th>Location</th></tr>
+            <tr><td>E01</td><td>Ahmed</td><td>CS</td><td>9000</td><td>Cairo</td></tr>
+            <tr><td>E03</td><td>Omar</td><td>CS</td><td>11000</td><td>Cairo</td></tr>
+          </table></div>
+          <div class="explain">
+            <strong>خطوة 1:</strong> σ Salary &gt; 8000 → Ahmed(9000) و Omar(11000)<br>
+            <strong>خطوة 2:</strong> π على كل الأعمدة → نفس البيانات بس بدون تغيير<br>
+            <strong>خطوة 3:</strong> ρ بتغير اسم العلاقة لـ E والأعمدة للأسماء الجديدة
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 2: SET OPS ══════════════ -->
+<div id="sets" class="section">
+  <div class="sec-header">
+    <div class="sec-title">Set Operations — ∪ ∩ − × ÷</div>
+    <div class="sec-desc">الجداول التالية مستخدمة في الأسئلة</div>
+  </div>
+
+  <div class="context-box">
+    <div class="context-label">Relations: ARABIC &amp; ENGLISH (Students)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+      <div>
+        <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-weight:700">ARABIC</div>
+        <div class="tbl-wrap"><table>
+          <tr><th>StudentName</th></tr>
+          <tr><td>Ahmed</td></tr>
+          <tr><td>Sara</td></tr>
+          <tr><td>Omar</td></tr>
+          <tr><td>Mona</td></tr>
+        </table></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-weight:700">ENGLISH</div>
+        <div class="tbl-wrap"><table>
+          <tr><th>StudentName</th></tr>
+          <tr><td>Sara</td></tr>
+          <tr><td>Omar</td></tr>
+          <tr><td>Layla</td></tr>
+          <tr><td>Karim</td></tr>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="context-box" style="margin-top:-0.5rem">
+    <div class="context-label">Relations: Relation_A &amp; Relation_B</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+      <div>
+        <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-weight:700">Relation_A</div>
+        <div class="tbl-wrap"><table>
+          <tr><th>X</th><th>Y</th></tr>
+          <tr><td>1</td><td>a</td></tr>
+          <tr><td>2</td><td>b</td></tr>
+          <tr><td>3</td><td>c</td></tr>
+        </table></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-weight:700">Relation_B</div>
+        <div class="tbl-wrap"><table>
+          <tr><th>P</th><th>Q</th></tr>
+          <tr><td>10</td><td>X</td></tr>
+          <tr><td>20</td><td>Y</td></tr>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="context-box" style="margin-top:-0.5rem">
+    <div class="context-label">Relations: Enrollment &amp; Required_Courses (for Division)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+      <div>
+        <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-weight:700">Enrollment (SID, CID)</div>
+        <div class="tbl-wrap"><table>
+          <tr><th>SID</th><th>CID</th></tr>
+          <tr><td>S1</td><td>C1</td></tr>
+          <tr><td>S1</td><td>C2</td></tr>
+          <tr><td>S2</td><td>C1</td></tr>
+          <tr><td>S2</td><td>C2</td></tr>
+          <tr><td>S2</td><td>C3</td></tr>
+          <tr><td>S3</td><td>C1</td></tr>
+          <tr><td>S3</td><td>C3</td></tr>
+        </table></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-weight:700">Required_Courses (CID)</div>
+        <div class="tbl-wrap"><table>
+          <tr><th>CID</th></tr>
+          <tr><td>C1</td></tr>
+          <tr><td>C2</td></tr>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MCQ 1 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">1</div>
+      <div><div class="qtext">What is the main constraint for applying UNION (∪) between two relations?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','sq1')"><span class="ol">A</span> Both relations must have the same number of tuples (rows).</button>
+      <button class="opt" onclick="pick(this,'correct','sq1')"><span class="ol">B</span> Both relations must be union-compatible: same number of attributes with compatible domains.</button>
+      <button class="opt" onclick="pick(this,'wrong','sq1')"><span class="ol">C</span> One relation must be a subset of the other.</button>
+      <button class="opt" onclick="pick(this,'wrong','sq1')"><span class="ol">D</span> Both relations must share at least one common attribute name.</button>
+    </div>
+    <div class="feedback" id="fb-sq1"></div>
+    <button class="check-btn" id="cb-sq1" onclick="check('sq1')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 2 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">2</div>
+      <div><div class="qtext">Which query retrieves students enrolled in <strong>ARABIC but NOT in ENGLISH</strong>?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','sq2')"><span class="ol">A</span> ARABIC ∪ ENGLISH</button>
+      <button class="opt" onclick="pick(this,'wrong','sq2')"><span class="ol">B</span> ARABIC ∩ ENGLISH</button>
+      <button class="opt" onclick="pick(this,'correct','sq2')"><span class="ol">C</span> ARABIC − ENGLISH</button>
+      <button class="opt" onclick="pick(this,'wrong','sq2')"><span class="ol">D</span> ENGLISH − ARABIC</button>
+    </div>
+    <div class="feedback" id="fb-sq2"></div>
+    <button class="check-btn" id="cb-sq2" onclick="check('sq2')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 3 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">3</div>
+      <div><div class="qtext">Relation_A has 3 rows and Relation_B has 2 rows. How many rows will be in <strong>Relation_A × Relation_B</strong>?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','sq3')"><span class="ol">A</span> 5 rows</button>
+      <button class="opt" onclick="pick(this,'correct','sq3')"><span class="ol">B</span> 6 rows</button>
+      <button class="opt" onclick="pick(this,'wrong','sq3')"><span class="ol">C</span> 9 rows</button>
+      <button class="opt" onclick="pick(this,'wrong','sq3')"><span class="ol">D</span> 2 rows</button>
+    </div>
+    <div class="feedback" id="fb-sq3"></div>
+    <button class="check-btn" id="cb-sq3" onclick="check('sq3')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 4 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">4</div>
+      <div><div class="qtext">Which operation is <strong>NOT commutative</strong> (changing order changes the result)?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','sq4')"><span class="ol">A</span> UNION ∪</button>
+      <button class="opt" onclick="pick(this,'wrong','sq4')"><span class="ol">B</span> INTERSECTION ∩</button>
+      <button class="opt" onclick="pick(this,'correct','sq4')"><span class="ol">C</span> DIFFERENCE −</button>
+      <button class="opt" onclick="pick(this,'wrong','sq4')"><span class="ol">D</span> CARTESIAN PRODUCT ×</button>
+    </div>
+    <div class="feedback" id="fb-sq4"></div>
+    <button class="check-btn" id="cb-sq4" onclick="check('sq4')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 5 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">5</div>
+      <div><div class="qtext">What is the SQL equivalent of the Relational Algebra <strong>MINUS (−)</strong> operation?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','sq5')"><span class="ol">A</span> UNION ALL</button>
+      <button class="opt" onclick="pick(this,'wrong','sq5')"><span class="ol">B</span> INTERSECT</button>
+      <button class="opt" onclick="pick(this,'correct','sq5')"><span class="ol">C</span> EXCEPT</button>
+      <button class="opt" onclick="pick(this,'wrong','sq5')"><span class="ol">D</span> NOT IN (always equivalent)</button>
+    </div>
+    <div class="feedback" id="fb-sq5"></div>
+    <button class="check-btn" id="cb-sq5" onclick="check('sq5')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 6 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">6</div>
+      <div><div class="qtext">Which expression is equivalent to <strong>A ∩ B</strong> using only Union and Difference?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'correct','sq6')"><span class="ol">A</span> A − (A − B)</button>
+      <button class="opt" onclick="pick(this,'wrong','sq6')"><span class="ol">B</span> (A ∪ B) − A</button>
+      <button class="opt" onclick="pick(this,'wrong','sq6')"><span class="ol">C</span> (A − B) ∪ (B − A)</button>
+      <button class="opt" onclick="pick(this,'wrong','sq6')"><span class="ol">D</span> A ∪ (A − B)</button>
+    </div>
+    <div class="feedback" id="fb-sq6"></div>
+    <button class="check-btn" id="cb-sq6" onclick="check('sq6')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <hr class="qdivider">
+  <div style="font-size:13px;color:var(--text3);margin-bottom:1rem;font-weight:600;">📝 توقع الناتج</div>
+
+  <!-- OPEN S1 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q1</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">ARABIC ∪ ENGLISH</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <button class="show-btn" onclick="toggleAns('os1',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="os1">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>StudentName</th></tr>
+            <tr><td>Ahmed</td></tr>
+            <tr><td>Sara</td></tr>
+            <tr><td>Omar</td></tr>
+            <tr><td>Mona</td></tr>
+            <tr><td>Layla</td></tr>
+            <tr><td>Karim</td></tr>
+          </table></div>
+          <div class="explain">Union بيجمع كل الأسماء من الجدولين ويشيل التكرار. Sara و Omar موجودين في الاتنين لكن بييجوا مرة وحدة.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN S2 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q2</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">ARABIC ∩ ENGLISH</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <button class="show-btn" onclick="toggleAns('os2',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="os2">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>StudentName</th></tr>
+            <tr><td>Sara</td></tr>
+            <tr><td>Omar</td></tr>
+          </table></div>
+          <div class="explain">Intersection بترجع الصفوف المشتركة بس. Sara و Omar موجودين في الجدولين — Ahmed و Mona في ARABIC بس، Layla و Karim في ENGLISH بس.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN S3 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q3</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">ENGLISH − ARABIC</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <button class="show-btn" onclick="toggleAns('os3',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="os3">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>StudentName</th></tr>
+            <tr><td>Layla</td></tr>
+            <tr><td>Karim</td></tr>
+          </table></div>
+          <div class="explain">ENGLISH − ARABIC = من ENGLISH شيل اللي في ARABIC. Sara و Omar موجودين في ARABIC فبييجوا. Layla و Karim مش في ARABIC فبييجوا.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN S4 Cartesian -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q4</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">Relation_A × Relation_B</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <button class="show-btn" onclick="toggleAns('os4',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="os4">
+        <div class="answer-label">✓ الإجابة الصحيحة — 3 × 2 = 6 صفوف</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>A.X</th><th>A.Y</th><th>B.P</th><th>B.Q</th></tr>
+            <tr><td>1</td><td>a</td><td>10</td><td>X</td></tr>
+            <tr><td>1</td><td>a</td><td>20</td><td>Y</td></tr>
+            <tr><td>2</td><td>b</td><td>10</td><td>X</td></tr>
+            <tr><td>2</td><td>b</td><td>20</td><td>Y</td></tr>
+            <tr><td>3</td><td>c</td><td>10</td><td>X</td></tr>
+            <tr><td>3</td><td>c</td><td>20</td><td>Y</td></tr>
+          </table></div>
+          <div class="explain">Cartesian Product: كل صف من A بيتجمع مع كل صف من B. 3 صفوف × 2 صفوف = 6 صفوف. عدد الأعمدة = 2+2 = 4.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN S5 Division -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q5</div>
+      <div>
+        <div class="qtext">توقع ناتج الاستعلام التالي:</div>
+        <div class="query-box">Enrollment(SID, CID) ÷ Required_Courses(CID)</div>
+      </div>
+    </div>
+    <div class="open-body">
+      <div class="open-hint">💡 المطلوب: مين السيود اللي خدوا <strong>كل</strong> الكورسات في Required_Courses (C1 و C2)</div>
+      <button class="show-btn" onclick="toggleAns('os5',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="os5">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>SID</th></tr>
+            <tr><td>S1</td></tr>
+            <tr><td>S2</td></tr>
+          </table></div>
+          <div class="explain">
+            S1: خد C1 و C2 ✓ (يغطي Required)<br>
+            S2: خد C1 و C2 و C3 ✓ (يغطي Required وأكتر)<br>
+            S3: خد C1 و C3 فقط ✗ (ناقصه C2 — مش بييجي)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 3: FD ══════════════ -->
+<div id="fd" class="section">
+  <div class="sec-header">
+    <div class="sec-title">Functional Dependencies</div>
+    <div class="sec-desc">Trivial · Non-Trivial · Partial · Transitive · Armstrong's Axioms</div>
+  </div>
+
+  <div class="context-box">
+    <div class="context-label">Relation: Orders</div>
+    <div class="tbl-wrap"><table>
+      <tr><th>OrderID</th><th>ItemID</th><th>ItemName</th><th>ItemPrice</th><th>CustomerID</th><th>CustomerCity</th><th>Qty</th></tr>
+      <tr><td>O1</td><td>I1</td><td>Phone</td><td>12000</td><td>C1</td><td>Cairo</td><td>2</td></tr>
+      <tr><td>O1</td><td>I2</td><td>Case</td><td>150</td><td>C1</td><td>Cairo</td><td>3</td></tr>
+      <tr><td>O2</td><td>I1</td><td>Phone</td><td>12000</td><td>C2</td><td>Alex</td><td>1</td></tr>
+      <tr><td>O3</td><td>I3</td><td>Charger</td><td>300</td><td>C1</td><td>Cairo</td><td>5</td></tr>
+    </table></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:8px;">Primary Key: <span style="color:var(--accent2);font-family:var(--mono)">(OrderID, ItemID)</span></div>
+  </div>
+
+  <!-- MCQ 1 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">1</div>
+      <div><div class="qtext">A functional dependency X → Y where <strong>Y ⊆ X</strong> is called:</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','fq1')"><span class="ol">A</span> Full Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'wrong','fq1')"><span class="ol">B</span> Partial Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'correct','fq1')"><span class="ol">C</span> Trivial Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'wrong','fq1')"><span class="ol">D</span> Transitive Functional Dependency</button>
+    </div>
+    <div class="feedback" id="fb-fq1"></div>
+    <button class="check-btn" id="cb-fq1" onclick="check('fq1')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 2 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">2</div>
+      <div><div class="qtext">In the Orders relation, <strong>ItemID → ItemName</strong> is an example of:</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','fq2')"><span class="ol">A</span> Full Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'correct','fq2')"><span class="ol">B</span> Partial Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'wrong','fq2')"><span class="ol">C</span> Trivial Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'wrong','fq2')"><span class="ol">D</span> Multivalued Dependency</button>
+    </div>
+    <div class="feedback" id="fb-fq2"></div>
+    <button class="check-btn" id="cb-fq2" onclick="check('fq2')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 3 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">3</div>
+      <div><div class="qtext">Given: <strong>OrderID → CustomerID</strong> and <strong>CustomerID → CustomerCity</strong>. What type is <strong>OrderID → CustomerCity</strong>?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','fq3')"><span class="ol">A</span> Partial Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'wrong','fq3')"><span class="ol">B</span> Trivial Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'correct','fq3')"><span class="ol">C</span> Transitive Functional Dependency</button>
+      <button class="opt" onclick="pick(this,'wrong','fq3')"><span class="ol">D</span> Full Functional Dependency</button>
+    </div>
+    <div class="feedback" id="fb-fq3"></div>
+    <button class="check-btn" id="cb-fq3" onclick="check('fq3')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 4 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">4</div>
+      <div><div class="qtext">Which of the following is a <strong>Trivial</strong> Functional Dependency?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','fq4')"><span class="ol">A</span> OrderID → CustomerCity</button>
+      <button class="opt" onclick="pick(this,'correct','fq4')"><span class="ol">B</span> {OrderID, ItemID} → OrderID</button>
+      <button class="opt" onclick="pick(this,'wrong','fq4')"><span class="ol">C</span> ItemID → ItemName</button>
+      <button class="opt" onclick="pick(this,'wrong','fq4')"><span class="ol">D</span> OrderID → CustomerID</button>
+    </div>
+    <div class="feedback" id="fb-fq4"></div>
+    <button class="check-btn" id="cb-fq4" onclick="check('fq4')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 5 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">5</div>
+      <div><div class="qtext">According to Armstrong's <strong>Augmentation</strong> axiom, if X → Y, then:</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'correct','fq5')"><span class="ol">A</span> XZ → YZ (for any set of attributes Z)</button>
+      <button class="opt" onclick="pick(this,'wrong','fq5')"><span class="ol">B</span> Y → X</button>
+      <button class="opt" onclick="pick(this,'wrong','fq5')"><span class="ol">C</span> X → XY</button>
+      <button class="opt" onclick="pick(this,'wrong','fq5')"><span class="ol">D</span> If Y → Z then X → Z</button>
+    </div>
+    <div class="feedback" id="fb-fq5"></div>
+    <button class="check-btn" id="cb-fq5" onclick="check('fq5')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 6 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">6</div>
+      <div><div class="qtext">In the Orders relation, which FD is a <strong>Full Functional Dependency</strong> (not partial, not transitive)?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','fq6')"><span class="ol">A</span> ItemID → ItemName</button>
+      <button class="opt" onclick="pick(this,'wrong','fq6')"><span class="ol">B</span> OrderID → CustomerID</button>
+      <button class="opt" onclick="pick(this,'correct','fq6')"><span class="ol">C</span> (OrderID, ItemID) → Qty</button>
+      <button class="opt" onclick="pick(this,'wrong','fq6')"><span class="ol">D</span> OrderID → CustomerCity</button>
+    </div>
+    <div class="feedback" id="fb-fq6"></div>
+    <button class="check-btn" id="cb-fq6" onclick="check('fq6')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 7 Armstrong -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">7</div>
+      <div><div class="qtext">Given: A → B and B → C and A → D. Which of the following can be derived using Armstrong's axioms?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','fq7')"><span class="ol">A</span> B → A</button>
+      <button class="opt" onclick="pick(this,'correct','fq7')"><span class="ol">B</span> A → BCD (using Transitivity + Union)</button>
+      <button class="opt" onclick="pick(this,'wrong','fq7')"><span class="ol">C</span> D → C</button>
+      <button class="opt" onclick="pick(this,'wrong','fq7')"><span class="ol">D</span> C → A</button>
+    </div>
+    <div class="feedback" id="fb-fq7"></div>
+    <button class="check-btn" id="cb-fq7" onclick="check('fq7')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <hr class="qdivider">
+  <div style="font-size:13px;color:var(--text3);margin-bottom:1rem;font-weight:600;">📝 حدد نوع الـ FD</div>
+
+  <!-- OPEN FD1 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q1</div>
+      <div><div class="qtext">حدد نوع كل FD من الـ FDs دي في جدول Orders</div></div>
+    </div>
+    <div class="open-body">
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+        <code style="font-family:var(--mono);font-size:12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--accent2)">أ) {OrderID, ItemID} → ItemID</code>
+        <code style="font-family:var(--mono);font-size:12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--accent2)">ب) ItemID → ItemPrice</code>
+        <code style="font-family:var(--mono);font-size:12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--accent2)">ج) OrderID → CustomerCity (via CustomerID)</code>
+        <code style="font-family:var(--mono);font-size:12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--accent2)">د) {OrderID, ItemID} → Qty</code>
+      </div>
+      <button class="show-btn" onclick="toggleAns('ofd1',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="ofd1">
+        <div class="answer-label">✓ الإجابة الصحيحة</div>
+        <div class="answer-box">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div><span class="fd-tag fd-trivial">Trivial</span> أ) {OrderID,ItemID} → ItemID — لأن ItemID ⊆ {OrderID,ItemID}</div>
+            <div><span class="fd-tag fd-partial">Partial</span> ب) ItemID → ItemPrice — بيعتمد على جزء من الـ Composite Key بس</div>
+            <div><span class="fd-tag fd-transitive">Transitive</span> ج) OrderID → CustomerCity — OrderID→CustomerID→CustomerCity</div>
+            <div><span class="fd-tag fd-full">Full</span> د) {OrderID,ItemID} → Qty — محتاج الاتنين عشان يحدد الكمية</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TAB 4: NORMALIZATION ══════════════ -->
+<div id="norm" class="section">
+  <div class="sec-header">
+    <div class="sec-title">Normalization — 1NF → 2NF → 3NF → BCNF</div>
+  </div>
+
+  <!-- MCQ 1 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">1</div>
+      <div><div class="qtext">When a non-key attribute depends on <strong>only part of a composite primary key</strong>, this violates:</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','nq1')"><span class="ol">A</span> First Normal Form (1NF)</button>
+      <button class="opt" onclick="pick(this,'correct','nq1')"><span class="ol">B</span> Second Normal Form (2NF)</button>
+      <button class="opt" onclick="pick(this,'wrong','nq1')"><span class="ol">C</span> Third Normal Form (3NF)</button>
+      <button class="opt" onclick="pick(this,'wrong','nq1')"><span class="ol">D</span> BCNF</button>
+    </div>
+    <div class="feedback" id="fb-nq1"></div>
+    <button class="check-btn" id="cb-nq1" onclick="check('nq1')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 2 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">2</div>
+      <div><div class="qtext">A table has a multi-valued cell like <em>Phones = "01011111, 01022222"</em>. Which normal form does this violate?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'correct','nq2')"><span class="ol">A</span> First Normal Form (1NF) — values must be atomic</button>
+      <button class="opt" onclick="pick(this,'wrong','nq2')"><span class="ol">B</span> Second Normal Form (2NF)</button>
+      <button class="opt" onclick="pick(this,'wrong','nq2')"><span class="ol">C</span> Third Normal Form (3NF)</button>
+      <button class="opt" onclick="pick(this,'wrong','nq2')"><span class="ol">D</span> BCNF</button>
+    </div>
+    <div class="feedback" id="fb-nq2"></div>
+    <button class="check-btn" id="cb-nq2" onclick="check('nq2')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 3 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">3</div>
+      <div><div class="qtext">A table is in 2NF. It has: <strong>EmpID → DeptID</strong> and <strong>DeptID → DeptLocation</strong>. Which normal form does this violate?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','nq3')"><span class="ol">A</span> 1NF</button>
+      <button class="opt" onclick="pick(this,'wrong','nq3')"><span class="ol">B</span> 2NF</button>
+      <button class="opt" onclick="pick(this,'correct','nq3')"><span class="ol">C</span> 3NF — transitive dependency via DeptID</button>
+      <button class="opt" onclick="pick(this,'wrong','nq3')"><span class="ol">D</span> It violates no normal form</button>
+    </div>
+    <div class="feedback" id="fb-nq3"></div>
+    <button class="check-btn" id="cb-nq3" onclick="check('nq3')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 4 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">4</div>
+      <div><div class="qtext">BCNF requires that for every non-trivial FD X → Y in a relation, X must be:</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','nq4')"><span class="ol">A</span> A foreign key</button>
+      <button class="opt" onclick="pick(this,'wrong','nq4')"><span class="ol">B</span> A prime attribute</button>
+      <button class="opt" onclick="pick(this,'correct','nq4')"><span class="ol">C</span> A superkey</button>
+      <button class="opt" onclick="pick(this,'wrong','nq4')"><span class="ol">D</span> A non-key attribute</button>
+    </div>
+    <div class="feedback" id="fb-nq4"></div>
+    <button class="check-btn" id="cb-nq4" onclick="check('nq4')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <!-- MCQ 5 -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">5</div>
+      <div><div class="qtext">Which of the following correctly describes the <strong>order of normalization</strong>?</div></div>
+    </div>
+    <div class="options">
+      <button class="opt" onclick="pick(this,'wrong','nq5')"><span class="ol">A</span> 3NF → 2NF → 1NF → BCNF</button>
+      <button class="opt" onclick="pick(this,'correct','nq5')"><span class="ol">B</span> 1NF → 2NF → 3NF → BCNF</button>
+      <button class="opt" onclick="pick(this,'wrong','nq5')"><span class="ol">C</span> 2NF → 1NF → BCNF → 3NF</button>
+      <button class="opt" onclick="pick(this,'wrong','nq5')"><span class="ol">D</span> BCNF → 3NF → 2NF → 1NF</button>
+    </div>
+    <div class="feedback" id="fb-nq5"></div>
+    <button class="check-btn" id="cb-nq5" onclick="check('nq5')" disabled>تحقق من الإجابة</button>
+  </div>
+
+  <hr class="qdivider">
+  <div style="font-size:13px;color:var(--text3);margin-bottom:1rem;font-weight:600;">📝 طبّق الـ Normal Form</div>
+
+  <!-- OPEN N1 — 1NF -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q1</div>
+      <div><div class="qtext">حول الجدول التالي لـ <strong>1NF</strong></div></div>
+    </div>
+    <div class="open-body">
+      <div class="tbl-wrap" style="margin-bottom:12px"><table>
+        <tr><th>StudentID</th><th>Name</th><th>Subjects</th></tr>
+        <tr><td>S1</td><td>Ahmed</td><td>Math, Physics, CS</td></tr>
+        <tr><td>S2</td><td>Sara</td><td>Chemistry, Math</td></tr>
+      </table></div>
+      <button class="show-btn" onclick="toggleAns('on1',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="on1">
+        <div class="answer-label">✓ 1NF — كل قيمة Atomic</div>
+        <div class="answer-box">
+          <div class="tbl-wrap"><table>
+            <tr><th>StudentID</th><th>Name</th><th>Subject</th></tr>
+            <tr><td>S1</td><td>Ahmed</td><td>Math</td></tr>
+            <tr><td>S1</td><td>Ahmed</td><td>Physics</td></tr>
+            <tr><td>S1</td><td>Ahmed</td><td>CS</td></tr>
+            <tr><td>S2</td><td>Sara</td><td>Chemistry</td></tr>
+            <tr><td>S2</td><td>Sara</td><td>Math</td></tr>
+          </table></div>
+          <div class="explain">المشكلة كانت Subjects فيها قيم متعددة في خلية واحدة. الحل: صف لكل Subject. الـ PK بقى (StudentID, Subject).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN N2 — 2NF -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q2</div>
+      <div><div class="qtext">حول الجدول التالي من 1NF لـ <strong>2NF</strong></div></div>
+    </div>
+    <div class="open-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">Primary Key: <span style="color:var(--accent2);font-family:var(--mono)">(StuID, CourseID)</span></div>
+      <div class="tbl-wrap" style="margin-bottom:12px"><table>
+        <tr><th>StuID</th><th>CourseID</th><th>StuName</th><th>CourseName</th><th>Instructor</th><th>Grade</th></tr>
+        <tr><td>S1</td><td>C1</td><td>Ahmed</td><td>Math</td><td>Dr.Ali</td><td>A</td></tr>
+        <tr><td>S1</td><td>C2</td><td>Ahmed</td><td>CS</td><td>Dr.Sara</td><td>B</td></tr>
+        <tr><td>S2</td><td>C1</td><td>Omar</td><td>Math</td><td>Dr.Ali</td><td>C</td></tr>
+        <tr><td>S2</td><td>C2</td><td>Omar</td><td>CS</td><td>Dr.Sara</td><td>A</td></tr>
+      </table></div>
+      <button class="show-btn" onclick="toggleAns('on2',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="on2">
+        <div class="answer-label">✓ 2NF — شيل الـ Partial FDs</div>
+        <div class="answer-box">
+          <div class="explain" style="margin-bottom:10px">
+            <strong>الـ Partial FDs:</strong><br>
+            StuID → StuName (Partial!)<br>
+            CourseID → CourseName, Instructor (Partial!)<br>
+            (StuID, CourseID) → Grade (Full ✓)
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:11px;color:var(--green);margin-bottom:4px;font-weight:700">Students</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>StuID</th><th>StuName</th></tr>
+                <tr><td>S1</td><td>Ahmed</td></tr>
+                <tr><td>S2</td><td>Omar</td></tr>
+              </table></div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--green);margin-bottom:4px;font-weight:700">Courses</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>CourseID</th><th>CourseName</th><th>Instructor</th></tr>
+                <tr><td>C1</td><td>Math</td><td>Dr.Ali</td></tr>
+                <tr><td>C2</td><td>CS</td><td>Dr.Sara</td></tr>
+              </table></div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--green);margin-bottom:4px;font-weight:700">Enrollment</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>StuID</th><th>CourseID</th><th>Grade</th></tr>
+                <tr><td>S1</td><td>C1</td><td>A</td></tr>
+                <tr><td>S1</td><td>C2</td><td>B</td></tr>
+                <tr><td>S2</td><td>C1</td><td>C</td></tr>
+                <tr><td>S2</td><td>C2</td><td>A</td></tr>
+              </table></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN N3 — 3NF -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q3</div>
+      <div><div class="qtext">حول الجدول التالي (في 2NF) لـ <strong>3NF</strong></div></div>
+    </div>
+    <div class="open-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">FDs: EmpID→ZipCode, ZipCode→City, ZipCode→State</div>
+      <div class="tbl-wrap" style="margin-bottom:12px"><table>
+        <tr><th>EmpID</th><th>EmpName</th><th>ZipCode</th><th>City</th><th>State</th></tr>
+        <tr><td>E1</td><td>Ahmed</td><td>11511</td><td>Cairo</td><td>Cairo Gov</td></tr>
+        <tr><td>E2</td><td>Sara</td><td>21511</td><td>Alex</td><td>Alex Gov</td></tr>
+        <tr><td>E3</td><td>Omar</td><td>11511</td><td>Cairo</td><td>Cairo Gov</td></tr>
+      </table></div>
+      <button class="show-btn" onclick="toggleAns('on3',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="on3">
+        <div class="answer-label">✓ 3NF — شيل الـ Transitive FDs</div>
+        <div class="answer-box">
+          <div class="explain" style="margin-bottom:10px">
+            <strong>المشكلة:</strong> EmpID→ZipCode→City وEmpID→ZipCode→State (Transitive!)<br>
+            City و State بيعتمدوا على ZipCode مش على EmpID مباشرة.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:11px;color:var(--amber);margin-bottom:4px;font-weight:700">Employee</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>EmpID</th><th>EmpName</th><th>ZipCode</th></tr>
+                <tr><td>E1</td><td>Ahmed</td><td>11511</td></tr>
+                <tr><td>E2</td><td>Sara</td><td>21511</td></tr>
+                <tr><td>E3</td><td>Omar</td><td>11511</td></tr>
+              </table></div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--amber);margin-bottom:4px;font-weight:700">ZipCode_Info</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>ZipCode</th><th>City</th><th>State</th></tr>
+                <tr><td>11511</td><td>Cairo</td><td>Cairo Gov</td></tr>
+                <tr><td>21511</td><td>Alex</td><td>Alex Gov</td></tr>
+              </table></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN N4 — BCNF -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q4</div>
+      <div><div class="qtext">حول الجدول التالي لـ <strong>BCNF</strong></div></div>
+    </div>
+    <div class="open-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">
+        FDs: {Student, Course} → Advisor &nbsp;|&nbsp; Advisor → Course<br>
+        Candidate Keys: {Student, Course} و {Student, Advisor}
+      </div>
+      <div class="tbl-wrap" style="margin-bottom:12px"><table>
+        <tr><th>Student</th><th>Course</th><th>Advisor</th></tr>
+        <tr><td>Ahmed</td><td>Math</td><td>Dr.Ali</td></tr>
+        <tr><td>Ahmed</td><td>CS</td><td>Dr.Sara</td></tr>
+        <tr><td>Sara</td><td>Math</td><td>Dr.Omar</td></tr>
+        <tr><td>Omar</td><td>CS</td><td>Dr.Sara</td></tr>
+      </table></div>
+      <button class="show-btn" onclick="toggleAns('on4',this)">إظهار الإجابة</button>
+      <div class="answer-reveal" id="on4">
+        <div class="answer-label">✓ BCNF</div>
+        <div class="answer-box">
+          <div class="explain" style="margin-bottom:10px">
+            <strong>المشكلة:</strong> Advisor → Course — لكن Advisor مش Superkey! ينتهك BCNF.<br>
+            الجدول في 3NF لكن مش في BCNF.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:11px;color:var(--accent2);margin-bottom:4px;font-weight:700">Advisor_Course</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>Advisor</th><th>Course</th></tr>
+                <tr><td>Dr.Ali</td><td>Math</td></tr>
+                <tr><td>Dr.Sara</td><td>CS</td></tr>
+                <tr><td>Dr.Omar</td><td>Math</td></tr>
+              </table></div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--accent2);margin-bottom:4px;font-weight:700">Student_Advisor</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>Student</th><th>Advisor</th></tr>
+                <tr><td>Ahmed</td><td>Dr.Ali</td></tr>
+                <tr><td>Ahmed</td><td>Dr.Sara</td></tr>
+                <tr><td>Sara</td><td>Dr.Omar</td></tr>
+                <tr><td>Omar</td><td>Dr.Sara</td></tr>
+              </table></div>
+            </div>
+          </div>
+          <div class="explain" style="margin-top:8px">دلوقتي كل determinant في أي FD هو Superkey ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN N5 — Full pipeline -->
+  <div class="qcard">
+    <div class="qcard-head"><div class="qnum">Q5 ★</div>
+      <div><div class="qtext">حول الجدول التالي من البداية لـ <strong>3NF خطوة خطوة</strong></div></div>
+    </div>
+    <div class="open-body">
+      <div class="tbl-wrap" style="margin-bottom:12px"><table>
+        <tr><th>EmpID</th><th>EmpName</th><th>Projects</th><th>ProjManager</th><th>ManagerDept</th></tr>
+        <tr><td>E1</td><td>Ahmed</td><td>P1, P2</td><td>Dr.Ali, Dr.Heba</td><td>CS, HR</td></tr>
+        <tr><td>E2</td><td>Sara</td><td>P1</td><td>Dr.Ali</td><td>CS</td></tr>
+      </table></div>
+      <button class="show-btn" onclick="toggleAns('on5',this)">إظهار الإجابة الكاملة</button>
+      <div class="answer-reveal" id="on5">
+        <div class="answer-label">✓ خطوات التحويل الكاملة</div>
+        <div class="answer-box">
+          <div class="explain" style="margin-bottom:12px"><strong>خطوة 1 — 1NF:</strong> شيل القيم المتعددة في Projects و ProjManager و ManagerDept</div>
+          <div class="tbl-wrap"><table>
+            <tr><th>EmpID</th><th>EmpName</th><th>ProjID</th><th>ProjManager</th><th>ManagerDept</th></tr>
+            <tr><td>E1</td><td>Ahmed</td><td>P1</td><td>Dr.Ali</td><td>CS</td></tr>
+            <tr><td>E1</td><td>Ahmed</td><td>P2</td><td>Dr.Heba</td><td>HR</td></tr>
+            <tr><td>E2</td><td>Sara</td><td>P1</td><td>Dr.Ali</td><td>CS</td></tr>
+          </table></div>
+          <div class="explain" style="margin:12px 0 8px"><strong>خطوة 2 — 2NF:</strong> PK = (EmpID, ProjID) — شيل الـ Partial FDs<br>EmpID→EmpName (Partial!) | ProjID→ProjManager,ManagerDept (Partial!)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
+            <div><div style="font-size:11px;color:var(--green);margin-bottom:4px">Employees</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>EmpID</th><th>EmpName</th></tr>
+                <tr><td>E1</td><td>Ahmed</td></tr>
+                <tr><td>E2</td><td>Sara</td></tr>
+              </table></div></div>
+            <div><div style="font-size:11px;color:var(--green);margin-bottom:4px">Projects</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>ProjID</th><th>ProjManager</th><th>ManagerDept</th></tr>
+                <tr><td>P1</td><td>Dr.Ali</td><td>CS</td></tr>
+                <tr><td>P2</td><td>Dr.Heba</td><td>HR</td></tr>
+              </table></div></div>
+            <div><div style="font-size:11px;color:var(--green);margin-bottom:4px">EmpProject</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>EmpID</th><th>ProjID</th></tr>
+                <tr><td>E1</td><td>P1</td></tr>
+                <tr><td>E1</td><td>P2</td></tr>
+                <tr><td>E2</td><td>P1</td></tr>
+              </table></div></div>
+          </div>
+          <div class="explain" style="margin-bottom:8px"><strong>خطوة 3 — 3NF:</strong> في جدول Projects: ProjID→ProjManager→ManagerDept (Transitive!)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div><div style="font-size:11px;color:var(--amber);margin-bottom:4px">Projects (بعد 3NF)</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>ProjID</th><th>ProjManager</th></tr>
+                <tr><td>P1</td><td>Dr.Ali</td></tr>
+                <tr><td>P2</td><td>Dr.Heba</td></tr>
+              </table></div></div>
+            <div><div style="font-size:11px;color:var(--amber);margin-bottom:4px">Managers</div>
+              <div class="tbl-wrap"><table>
+                <tr><th>ProjManager</th><th>ManagerDept</th></tr>
+                <tr><td>Dr.Ali</td><td>CS</td></tr>
+                <tr><td>Dr.Heba</td><td>HR</td></tr>
+              </table></div></div>
+          </div>
+          <div class="explain" style="margin-top:8px">✅ النتيجة النهائية: 4 جداول في 3NF — Employees، Managers، Projects، EmpProject</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<script>
+const state = {};
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+function pick(btn, result, qid) {
+  if (state[qid]?.done) return;
+  const opts = btn.closest('.options').querySelectorAll('.opt');
+  opts.forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+  state[qid] = { btn, result };
+  document.getElementById('cb-' + qid).disabled = false;
+}
+function check(qid) {
+  const s = state[qid];
+  if (!s || s.done) return;
+  s.done = true;
+  const opts = s.btn.closest('.options').querySelectorAll('.opt');
+  opts.forEach(o => {
+    o.classList.add('disabled');
+    if (o !== s.btn) o.classList.add('dimmed');
+  });
+  if (s.result === 'correct') {
+    s.btn.classList.add('correct');
+    const fb = document.getElementById('fb-' + qid);
+    fb.className = 'feedback correct open';
+    fb.textContent = '✓ إجابة صحيحة! ممتاز 🎉';
+  } else {
+    s.btn.classList.add('wrong');
+    opts.forEach(o => { if (o.getAttribute('onclick')?.includes("'correct'")) o.classList.add('correct'); });
+    const fb = document.getElementById('fb-' + qid);
+    fb.className = 'feedback wrong open';
+    fb.textContent = '✗ إجابة خاطئة — الإجابة الصحيحة هي الملوّنة باللون الأخضر.';
+  }
+  document.getElementById('cb-' + qid).disabled = true;
+}
+function toggleAns(id, btn) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+  btn.textContent = el.classList.contains('open') ? 'إخفاء الإجابة' : 'إظهار الإجابة';
+}
+</script>
+</body>
+</html>
